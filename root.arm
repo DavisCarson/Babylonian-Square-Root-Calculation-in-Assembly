@@ -1,0 +1,65 @@
+.global start
+
+@ Division function
+divide:
+    push {r3-r7, lr}
+    mov r0, #0          @ Initialize quotient
+    cmp r2, #0          @ Check for divide by zero
+    beq end_division
+    mov r3, r1          @ r3 = dividend
+    mov r5, r2          @ r5 = divisor
+    mov r6, #1          @ r6 = current power
+
+find_power:
+    add r7, r5, r5      @ Double the divisor
+    cmp r3, r7          @ Compare with dividend
+    blt done_power      @ If too big, were done
+    mov r5, r7          @ Update running divisor
+    add r6, r6, r6      @ Double the power
+    b find_power
+
+done_power:
+subtract:
+    cmp r3, r5          @ Compare dividend with divisor
+    blt update_power    @ If smaller, update power
+    sub r3, r3, r5      @ Subtract divisor from dividend
+    add r0, r0, r6      @ Add power to quotient
+    b subtract
+
+update_power:
+    lsr r5, r5, #1      @ Halve the divisor
+    lsr r6, r6, #1      @ Halve the power
+    cmp r6, #0          @ Check if we're done
+    bne subtract        @ If not, continue subtracting
+    
+end_division:
+    pop {r3-r7, pc}
+
+@ Square root function
+root:
+    push {r2-r6, lr}
+    mov r2, r0          @ Save input n
+    cmp r0, #0          @ Check for n = 0
+    beq end_root
+    mov r1, #1          @ Initial guess x = 1
+
+sqrt_loop:
+    mov r4, r1          @ Save old x
+    mov r1, r2          @ Set up n/x division
+    mov r6, r1          @ Save n
+    bl divide           @ Compute n/x
+    add r1, r0, r4      @ x + n/x
+    lsr r1, r1, #1      @ Divide by 2
+    cmp r1, r4          @ Compare with old x
+    bne sqrt_loop       @ Loop if different
+
+    mov r0, r1          @ Return result
+
+end_root:
+    pop {r2-r6, pc}
+
+start:
+    push {lr}
+    mov r0, #144        @ Test with n = 144
+    bl root
+    pop {pc}
